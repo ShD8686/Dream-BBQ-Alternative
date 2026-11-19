@@ -1,0 +1,13 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "c:\\computer graphics fundamentals\\dream bbq alternative 2\\ebo.h",
+        "ProvidedModule": "",
+        "Includes": [
+            "c:\\computer graphics fundamentals\\dream bbq alternative 2\\libraries\\include\\glad\\glad.h",
+            "c:\\computer graphics fundamentals\\dream bbq alternative 2\\libraries\\include\\khr\\khrplatform.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "c:\\computer graphics fundamentals\\dream bbq alternative 2\\vao.cpp",
+        "ProvidedModule": "",
+        "Includes": [
+            "c:\\computer graphics fundamentals\\dream bbq alternative 2\\vao.h",
+            "c:\\computer graphics fundamentals\\dream bbq alternative 2\\libraries\\include\\glad\\glad.h",
+            "c:\\computer graphics fundamentals\\dream bbq alternative 2\\libraries\\include\\khr\\khrplatform.h",
+            "c:\\computer graphics fundamentals\\dream bbq alternative 2\\vbo.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

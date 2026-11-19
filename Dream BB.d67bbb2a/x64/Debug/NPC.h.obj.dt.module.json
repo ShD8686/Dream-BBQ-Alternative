@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "Dream BB.d67bbb2a\\x64\\Debug\\NPC.obj",
+            "outputs": [
+                "Dream BB.d67bbb2a\\x64\\Debug\\NPC.h.obj.dt.module.json",
+                "Dream BB.d67bbb2a\\x64\\Debug\\NPC.h.obj.dt.d.json"
+            ],
+            "requires": []
+        }
+    ]
+}
