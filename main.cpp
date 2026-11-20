@@ -206,7 +206,7 @@ int main(int argc, char** argv)
             if (failCount <= 1)
             {
                 story.push_back({ { N("Your device ran into a problem and needs to restart.") }, 1.5f });
-                story.push_back({ { N("Stop cide: EXCEPTION_ANCHOR_NOT_FOUND_OR_EXIST.") }, 1.5f });
+                story.push_back({ { N("Stop code: EXCEPTION_ANCHOR_NOT_FOUND_OR_EXIST.") }, 1.5f });
                 story.push_back({ { N("0% complete") }, 3.0f, 1.0f });
                 story.push_back({ { N("43% complete") }, 3.0f, 1.0f });
                 story.push_back({ { N("75% complete") }, 3.0f, 1.0f });
@@ -222,7 +222,7 @@ int main(int argc, char** argv)
         else
         {
             story.push_back({ { N("Oh, it's you again!") }, 2.0f });
-            story.push_back({ { N("So you know thos party kinda sucks") }, 1.8f });
+            story.push_back({ { N("So you know this party kinda sucks") }, 1.8f });
             story.push_back({ { N("We probably have to find better things to do") }, 1.5f });
             StoryLine prize{ { N("Here is your prize") }, 3.5f };
             prize.achievement = true;                       // на этой строке выезжает ачивка
