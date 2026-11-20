@@ -37,6 +37,18 @@ void NPC::MakeFish()
     radius = 0.35f;
 }
 
+void NPC::MakeDevice()
+{
+    body->Delete();
+    nose->Delete();
+    body = std::make_shared<Mesh>(Mesh::Box(glm::vec3(0.50f, 0.90f, 0.50f), glm::vec3(0.22f, 0.24f, 0.30f)));
+    // компонента > 1.0 = светится (см. default.frag)
+    nose = std::make_shared<Mesh>(Mesh::Box(glm::vec3(0.32f, 0.20f, 0.10f), glm::vec3(0.30f, 1.50f, 0.55f)));
+    height = 0.90f;
+    radius = 0.40f;
+    noseZ = 0.27f;
+}
+
 void NPC::Update(float dt, const glm::vec3& playerPos)
 {
     if (!active) return;
@@ -73,7 +85,7 @@ void NPC::Draw(Shader& shader)
         return;
     }
     body->Draw(shader, glm::translate(base, glm::vec3(0.0f, height * 0.5f, 0.0f)));
-    nose->Draw(shader, glm::translate(base, glm::vec3(0.0f, height * 0.85f, 0.4f)));
+    nose->Draw(shader, glm::translate(base, glm::vec3(0.0f, height * 0.85f, noseZ)));
 }
 
 AABB NPC::Bounds() const

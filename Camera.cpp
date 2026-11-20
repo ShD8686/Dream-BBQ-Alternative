@@ -34,6 +34,13 @@ void Camera::Look(GLFWwindow* window, bool enabled)
     UpdateVectors();
 }
 
+void Camera::SetLook(float yawDegrees, float pitchDegrees)
+{
+    yaw = yawDegrees;
+    pitch = glm::clamp(pitchDegrees, -89.0f, 89.0f);
+    UpdateVectors();
+}
+
 void Camera::UpdateVectors()
 {
     float yawR = glm::radians(yaw);

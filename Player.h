@@ -28,7 +28,20 @@ public:
 
     glm::vec3 EyePosition() const { return Position + glm::vec3(0.0f, eyeHeight, 0.0f); }
 
+    // ---- Эффекты бега (включаются снаружи, например только на уровне с таймером) ----
+    bool runFx = false;        // false = камера как обычно
+    float baseFov = 70.0f;     // обычный угол обзора
+    float runFovKick = 12.0f;  // на сколько градусов шире при беге
+    float bobHeight = 0.05f;   // покачивание камеры вверх-вниз (метры)
+    float bobSway = 0.03f;     // покачивание из стороны в сторону (метры)
+    float bobPerMeter = 1.7f;  // радиан фазы на метр пути (чем больше, тем чаще "шаги")
+    float sprintSpeed = 15.0f;     // make sure this is > runSpeed (e.g. runSpeed * 1.5f)
+    float sprintFovKick = 12.0f;   // stronger FOV kick than runFovKick
+    int sprintKey = GLFW_KEY_LEFT_CONTROL; // change to any GLFW_KEY_* you prefer
+
 private:
     float velocityY = 0.0f;
     bool onGround = true;
+    float bobPhase = 0.0f;
+    float bobBlend = 0.0f;
 };

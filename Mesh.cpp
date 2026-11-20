@@ -1,4 +1,5 @@
 #include "Mesh.h"
+#include <cmath>
 #include <glm/gtc/type_ptr.hpp>
 
 Mesh::Mesh(std::vector<float> v, std::vector<GLuint> i, glm::vec3 c)
@@ -85,6 +86,24 @@ Mesh Mesh::Box(const glm::vec3& size, const glm::vec3& color)
         }
         idx.insert(idx.end(), { base, base + 1, base + 2, base, base + 2, base + 3 });
     }
+    return Mesh(verts, idx, color);
+}
+
+Mesh Mesh::Disc(float radius, int segments, const glm::vec3& color)
+{
+    const float twoPi = 6.2831853f;
+    std::vector<float> verts = { 0, 0, 0,  0, 1, 0,  0.5f, 0.5f };   // центр
+    std::vector<GLuint> idx;
+
+    for (int i = 0; i <= segments; ++i)
+    {
+        float a = twoPi * (float)i / (float)segments;
+        float c = std::cos(a), s = std::sin(a);
+        verts.insert(verts.end(), { radius * c, 0.0f, radius * s,  0, 1, 0,  0.5f + 0.5f * c, 0.5f + 0.5f * s });
+    }
+    for (int i = 1; i <= segments; ++i)
+        idx.insert(idx.end(), { 0u, (GLuint)(i + 1), (GLuint)i });
+
     return Mesh(verts, idx, color);
 }
 

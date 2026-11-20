@@ -1,6 +1,8 @@
 #include "UI.h"
 #include <fstream>
 #include <imgui.h>
+#include <cmath>
+#include <algorithm>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
@@ -50,6 +52,25 @@ void UI::DrawTimer(float secondsLeft)
     ImGui::End();
 }
 
+void UI::DrawVignette(float intensity, float r, float g, float b)
+{
+    if (intensity <= 0.001f) return;
+    if (intensity > 1.0f) intensity = 1.0f;
+
+    ImVec2 s = ImGui::GetIO().DisplaySize;
+    ImDrawList* dl = ImGui::GetBackgroundDrawList(); // под таймером и текстом, но поверх 3D-сцены
+
+    const int R = (int)(r * 255.0f), G = (int)(g * 255.0f), B = (int)(b * 255.0f);
+    const ImU32 edge = IM_COL32(R, G, B, (int)(intensity * 190.0f));
+    const ImU32 none = IM_COL32(R, G, B, 0);
+    const float bx = s.x * 0.28f, by = s.y * 0.30f;
+
+    dl->AddRectFilledMultiColor(ImVec2(0.0f, 0.0f),      ImVec2(s.x, by),     edge, edge, none, none); // сверху
+    dl->AddRectFilledMultiColor(ImVec2(0.0f, s.y - by),  ImVec2(s.x, s.y),    none, none, edge, edge); // снизу
+    dl->AddRectFilledMultiColor(ImVec2(0.0f, 0.0f),      ImVec2(bx, s.y),     edge, none, none, edge); // слева
+    dl->AddRectFilledMultiColor(ImVec2(s.x - bx, 0.0f),  ImVec2(s.x, s.y),    none, edge, edge, none); // справа
+}
+
 void UI::DrawFade(float r, float g, float b, float alpha)
 {
     if (alpha <= 0.001f) return;
@@ -60,7 +81,7 @@ void UI::DrawFade(float r, float g, float b, float alpha)
     ImGui::GetForegroundDrawList()->AddRectFilled(ImVec2(0.0f, 0.0f), s, col);
 }
 
-void UI::DrawBSOD(const std::string& text)
+void UI::DrawBSOD(const std::string& text, bool happy)
 {
     ImVec2 s = ImGui::GetIO().DisplaySize;
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
@@ -72,15 +93,197 @@ void UI::DrawBSOD(const std::string& text)
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav);
 
     ImGui::SetCursorPos(ImVec2(s.x * 0.12f, s.y * 0.22f));
-    ImGui::SetWindowFontScale(4.5f);
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ":(");
+    ImGui::SetWindowFontScale(happy ? 9.0f : 4.5f);
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), happy ? ":)" : ":(");
 
-    ImGui::SetCursorPos(ImVec2(s.x * 0.12f, s.y * 0.42f));
+    ImGui::SetCursorPos(happy ? ImVec2(s.x * 0.12f, s.y * 0.80f) : ImVec2(s.x * 0.12f, s.y * 0.42f));
     ImGui::SetWindowFontScale(3.5f);
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s", text.c_str());
 
     ImGui::SetWindowFontScale(1.0f);
     ImGui::End();
+}
+
+// ---------- Реплики авторов ----------
+
+// Время печати одного символа: после конца фразы ("." перед пробелом/концом) и запятой небольшая пауза
+static float CharCost(const std::string& s, size_t i)
+{
+    char c = s[i];
+    char nx = (i + 1 < s.size()) ? s[i + 1] : ' ';
+    float t = 0.095f;                                   // медленная печать
+    if (c == '.' && nx != '.') t += 0.60f;
+    else if (c == '.') t += 0.28f;                      // между точками многоточия
+    else if (c == ',') t += 0.30f;
+    else if (c == '!' || c == '?') t += 0.50f;
+    return t;
+}
+
+static std::string JoinSpans(const StoryLine& line)
+{
+    std::string all;
+    for (const StorySpan& sp : line.spans) all += sp.text;
+    return all;
+}
+
+float UI::StoryTypeDuration(const StoryLine& line)
+{
+    std::string all = JoinSpans(line);
+    float t = 0.0f;
+    for (size_t i = 0; i < all.size(); ++i) t += CharCost(all, i);
+    return t;
+}
+
+static float Hash01(float x)
+{
+    float v = std::sin(x * 127.1f) * 43758.5453f;
+    return v - std::floor(v);
+}
+
+// Сдвиг уже добавленных вершин (от индекса v0): нужен для наклона и "срезов" глитча
+template <class F>
+static void ShiftVerts(ImDrawList* dl, int v0, F fn)
+{
+    for (int i = v0; i < dl->VtxBuffer.Size; ++i)
+        fn(dl->VtxBuffer[i].pos);
+}
+
+void UI::DrawStoryLine(const StoryLine& line, float t, float fade)
+{
+    if (fade <= 0.001f) return;
+    ImVec2 s = ImGui::GetIO().DisplaySize;
+    ImDrawList* dl = ImGui::GetBackgroundDrawList();
+    ImFont* font = ImGui::GetFont();
+    const float time = (float)ImGui::GetTime();
+
+    // Сколько символов уже напечатано
+    std::string all = JoinSpans(line);
+    int shown = 0;
+    {
+        float acc = 0.0f;
+        for (size_t i = 0; i < all.size(); ++i)
+        {
+            acc += CharCost(all, i);
+            if (acc <= t) shown = (int)i + 1; else break;
+        }
+    }
+
+    // Размер шрифта: крупный, но строка обязана влезть в 90% ширины окна
+    float fs = std::max(26.0f, s.y * 0.065f);
+    auto totalWidth = [&](float size)
+    {
+        float w = 0.0f;
+        for (const StorySpan& sp : line.spans)
+            w += font->CalcTextSizeA(size, FLT_MAX, 0.0f, sp.text.c_str()).x;
+        return w;
+    };
+    float w = totalWidth(fs);
+    if (w > s.x * 0.9f) { fs *= s.x * 0.9f / w; w = totalWidth(fs); }
+
+    float x = (s.x - w) * 0.5f;
+    const float y = s.y * 0.5f - fs * 0.5f;
+    int consumed = 0;
+
+    for (const StorySpan& sp : line.spans)
+    {
+        float spW = font->CalcTextSizeA(fs, FLT_MAX, 0.0f, sp.text.c_str()).x;
+        int visible = std::max(0, std::min((int)sp.text.size(), shown - consumed));
+        consumed += (int)sp.text.size();
+        if (visible > 0)
+        {
+            std::string part = sp.text.substr(0, visible);
+            const int a255 = (int)(fade * 255.0f);
+            ImVec2 pos(x, y);
+
+            if (sp.style == SpanStyle::Normal)
+            {
+                dl->AddText(font, fs, pos, IM_COL32(225, 225, 225, a255), part.c_str());
+            }
+            else
+            {
+                // FREEDOM (красный, наклонённый) и TRUE (зелёный): оба с глитчами, наклон только у красного
+                const bool red = (sp.style == SpanStyle::Freedom);
+                const float slope = red ? 0.28f : 0.0f;
+                const float cy = pos.y + fs;
+                const float slot = std::floor(time * (red ? 11.0f : 9.0f));
+                const bool burst = Hash01(slot + (red ? 17.0f : 0.0f)) > (red ? 0.66f : 0.72f);
+                const float flick = red ? 0.80f + 0.20f * Hash01(std::floor(time * 14.0f)) : 1.0f;
+
+                std::string txt = part;
+                if (burst && !txt.empty())
+                {
+                    const char* junk = "01#%@$&";
+                    size_t idx = (size_t)(Hash01(slot + 3.0f) * txt.size()) % txt.size();
+                    txt[idx] = junk[(int)(Hash01(slot + 5.0f) * 7.0f) % 7];
+                }
+                // один вызов: текст со сдвигом верхней части (срез глитча) и наклоном
+                auto put = [&](ImVec2 p, ImU32 col, float cut, float dx)
+                {
+                    int v0 = dl->VtxBuffer.Size;
+                    dl->AddText(font, fs, p, col, txt.c_str());
+                    ShiftVerts(dl, v0, [&](ImVec2& q)
+                    {
+                        if (cut > 0.0f && q.y < cut) q.x += dx;
+                        q.x += (cy - q.y) * slope;
+                    });
+                };
+
+                const ImU32 glowCol = red ? IM_COL32(120, 0, 0, (int)(a255 * 0.30f)) : IM_COL32(20, 255, 80, (int)(a255 * 0.16f));
+                const ImU32 mainCol = red ? IM_COL32((int)(235 * flick), (int)(14 * flick), (int)(14 * flick), a255)
+                                          : IM_COL32(40, 255, 90, a255);
+                for (int k = 0; k < 4; ++k)
+                {
+                    float ang = k * 1.5708f + 0.7f;
+                    put(ImVec2(pos.x + std::cos(ang) * 3.0f, pos.y + std::sin(ang) * 3.0f), glowCol, -1.0f, 0.0f);
+                }
+                if (burst)
+                {
+                    float dx = (Hash01(slot + 1.0f) - 0.5f) * 10.0f;
+                    float cut = pos.y + fs * (0.30f + 0.4f * Hash01(slot + 2.0f));
+                    put(ImVec2(pos.x + 4.0f, pos.y), IM_COL32(255, 30, 60, (int)(a255 * 0.55f)), -1.0f, 0.0f);
+                    put(ImVec2(pos.x - 4.0f, pos.y + 1.0f), IM_COL32(40, 220, 255, (int)(a255 * 0.55f)), -1.0f, 0.0f);
+                    put(pos, mainCol, cut, dx);
+                }
+                else
+                {
+                    put(pos, mainCol, -1.0f, 0.0f);
+                }
+            }
+        }
+        x += spW;
+    }
+}
+
+void UI::DrawAchievement(const std::string& title, float t)
+{
+    // Выезд 0.5 с, показ, уезд после 5 с
+    const float inT = 0.5f, stay = 5.0f, outT = 0.5f;
+    if (t < 0.0f || t > inT + stay + outT) return;
+    float slide = 1.0f;
+    if (t < inT) { float k = t / inT; slide = 1.0f - (1.0f - k) * (1.0f - k); }
+    else if (t > inT + stay) { float k = (t - inT - stay) / outT; slide = 1.0f - k * k; }
+
+    ImVec2 s = ImGui::GetIO().DisplaySize;
+    ImDrawList* dl = ImGui::GetForegroundDrawList();
+    ImFont* font = ImGui::GetFont();
+
+    const float w = 330.0f, h = 76.0f, margin = 24.0f;
+    float x = s.x - (w + margin) * slide;
+    float y = s.y - h - margin;
+    ImVec2 a(x, y), b(x + w, y + h);
+
+    dl->AddRectFilled(a, b, IM_COL32(28, 28, 32, 235), 8.0f);
+    dl->AddRect(a, b, IM_COL32(90, 90, 100, 255), 8.0f, 0, 1.5f);
+
+    // Золотая "медаль" с вопросительным знаком
+    ImVec2 c(x + 40.0f, y + h * 0.5f);
+    dl->AddCircleFilled(c, 24.0f, IM_COL32(214, 170, 50, 255), 32);
+    dl->AddCircle(c, 24.0f, IM_COL32(255, 225, 120, 255), 32, 2.0f);
+    ImVec2 q = font->CalcTextSizeA(30.0f, FLT_MAX, 0.0f, "?");
+    dl->AddText(font, 30.0f, ImVec2(c.x - q.x * 0.5f, c.y - q.y * 0.5f), IM_COL32(60, 40, 5, 255), "?");
+
+    dl->AddText(font, 15.0f, ImVec2(x + 80.0f, y + 12.0f), IM_COL32(160, 160, 170, 255), "Achievement unlocked");
+    dl->AddText(font, 26.0f, ImVec2(x + 80.0f, y + 34.0f), IM_COL32(245, 245, 245, 255), title.c_str());
 }
 
 void UI::Init(GLFWwindow* window)

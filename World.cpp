@@ -1,6 +1,7 @@
 #include "World.h"
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include <random>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -18,6 +19,9 @@ void World::Clear()
     waterStreamIndices.clear();
     inDarkStairs = false;
     inPalaceScene = false;
+    palaceAnchored = false;
+    palaceAnchorZ = 0.0f;
+    lampLights.clear();
     palaceZ = 0.0f;
 }
 
@@ -92,6 +96,19 @@ void World::BuildDemo()
     AddBox(glm::vec3(fx + 1.35f, 1.325f, fz), glm::vec3(0.12f, 1.65f, 0.5f), splashColor, false);
     waterStreamIndices.push_back(props.size());
     AddBox(glm::vec3(fx - 1.35f, 1.325f, fz), glm::vec3(0.12f, 1.65f, 0.5f), splashColor, false);
+
+    // ---- Фонари-подсказки: в тумане огни видны издалека и ведут к ключевым местам ----
+    // Игрок появляется в (0, 8). Все координаты (x, z).
+    // "Дорога огней": от повара у фонтана через точку старта в дальний юго-западный угол, к рыбе.
+    AddLampTrail(glm::vec2(2.0f, 3.0f),    glm::vec2(17.0f, -22.0f));   // от старта к повару и фонтану
+    AddLampTrail(glm::vec2(-4.0f, 14.0f),  glm::vec2(-39.0f, 40.0f));   // от старта в юго-западный угол
+    // Ответвление к охраннику у входа в пирамиду
+    AddLampTrail(glm::vec2(-5.0f, 3.0f),   glm::vec2(-13.0f, 0.5f));
+    // Огонь за фонтаном, чтобы он выделялся силуэтом
+    AddLamp(glm::vec3(29.5f, 0.0f, -27.0f), glm::vec2(24.0f, -30.0f));
+    // Два фонаря-"ворота" вокруг рыбы (она маленькая и в тумане почти не видна)
+    AddLamp(glm::vec3(-43.5f, 0.0f, 49.0f), glm::vec2(-46.0f, 46.0f));
+    AddLamp(glm::vec3(-49.0f, 0.0f, 43.0f), glm::vec2(-46.0f, 46.0f));
 }
 
 void World::PlugFountainWithFish()
@@ -197,6 +214,25 @@ void World::BuildNextScene()
         flowers.push_back(FlowerInstance{ glm::vec3(x, 0.27f, z), glm::vec3(s, 0.14f, s), colIdx });
     }
 
+    // Ориентиры для ощущения скорости: пунктир по центру дороги и столбики по краям.
+    // Используют те же общие кубики и список instance'ов, что и цветы (дёшево по отрисовке).
+    const int kPaint = (int)flowerMeshes.size();
+    flowerMeshes.push_back(Mesh::Box(glm::vec3(1.0f), glm::vec3(0.96f, 0.95f, 0.90f)));   // краска дороги
+    const int kPost = (int)flowerMeshes.size();
+    flowerMeshes.push_back(Mesh::Box(glm::vec3(1.0f), glm::vec3(0.52f, 0.54f, 0.60f)));   // камень столбика
+    const int kCap = (int)flowerMeshes.size();
+    flowerMeshes.push_back(Mesh::Box(glm::vec3(1.0f), glm::vec3(0.92f, 0.76f, 0.22f)));   // золотая шапка
+
+    for (float z = 124.0f; z > -186.0f; z -= 6.0f)
+        flowers.push_back(FlowerInstance{ glm::vec3(0.0f, 0.05f, z), glm::vec3(0.28f, 0.02f, 2.6f), kPaint });
+
+    for (float z = 120.0f; z > -186.0f; z -= 15.0f)
+        for (float side : { -1.0f, 1.0f })
+        {
+            flowers.push_back(FlowerInstance{ glm::vec3(side * 3.75f, 0.55f, z), glm::vec3(0.32f, 1.10f, 0.32f), kPost });
+            flowers.push_back(FlowerInstance{ glm::vec3(side * 3.75f, 1.16f, z), glm::vec3(0.44f, 0.14f, 0.44f), kCap });
+        }
+
     // Big flat unreachable palace
     const glm::vec3 marble(0.95f, 0.93f, 0.88f);
     const glm::vec3 gold(0.92f, 0.76f, 0.22f);
@@ -252,12 +288,93 @@ void World::AddBox(const glm::vec3& center, const glm::vec3& size, const glm::ve
         colliders.push_back(AABB{ center - size * 0.5f, center + size * 0.5f });
 }
 
+void World::AddLamp(const glm::vec3& b, const glm::vec2& target)
+{
+    // Направление руки: от столба к точке target (в плоскости XZ)
+    glm::vec2 dir(target.x - b.x, target.y - b.z);
+    float len = glm::length(dir);
+    dir = (len > 1e-4f) ? dir / len : glm::vec2(1.0f, 0.0f);
+    const float yaw = glm::degrees(std::atan2(-dir.y, dir.x)); // поворот вокруг Y: локальная +X смотрит на target
+
+    const glm::vec3 metal(0.36f, 0.36f, 0.40f);
+    const glm::vec3 metalDark(0.24f, 0.24f, 0.28f);
+    const glm::vec3 bulb(1.45f, 1.00f, 0.42f);      // компонента > 1.0 = слегка светится сквозь туман (см. default.frag)
+
+    const float poleTop = 5.1f;   // высота столба
+    const float armLen = 1.5f;    // вылет руки
+
+    // Основание и столб твёрдые: сквозь них не пройти
+    AddBox(b + glm::vec3(0.0f, 0.25f, 0.0f), glm::vec3(0.6f, 0.5f, 0.6f), metalDark);
+    AddBox(b + glm::vec3(0.0f, (0.5f + poleTop) * 0.5f, 0.0f), glm::vec3(0.2f, poleTop - 0.5f, 0.2f), metal);
+    // Кольца на столбе (просто украшение)
+    AddBox(b + glm::vec3(0.0f, 1.5f, 0.0f), glm::vec3(0.34f, 0.12f, 0.34f), metalDark, false);
+    AddBox(b + glm::vec3(0.0f, 3.4f, 0.0f), glm::vec3(0.30f, 0.10f, 0.30f), metalDark, false);
+
+    // Часть фонаря со смещением x вдоль руки и высотой y, повёрнутая в сторону target
+    auto part = [&](float along, float height, const glm::vec3& size, const glm::vec3& color)
+    {
+        glm::vec3 pos = b + glm::vec3(along * dir.x, height, along * dir.y);
+        props.push_back(Prop{ Mesh::Box(size, color), pos, glm::vec3(0.0f, yaw, 0.0f) });
+    };
+    part(armLen * 0.5f, poleTop - 0.10f, glm::vec3(armLen + 0.2f, 0.14f, 0.14f), metal);   // рука
+    part(armLen,        poleTop - 0.24f, glm::vec3(1.00f, 0.16f, 0.56f), metalDark);       // корпус лампы
+    part(armLen,        poleTop - 0.35f, glm::vec3(0.90f, 0.08f, 0.45f), bulb);            // светящаяся лампа
+
+    // Настоящий точечный источник света: шейдер подсвечивает им землю и стены рядом (см. UploadLights)
+    lampLights.push_back(b + glm::vec3(dir.x * armLen, poleTop - 0.45f, dir.y * armLen));
+}
+
+void World::AddLampTrail(const glm::vec2& from, const glm::vec2& to, float spacing, float sideOffset)
+{
+    glm::vec2 d = to - from;
+    float len = glm::length(d);
+    if (len < 1e-3f) return;
+
+    glm::vec2 dir = d / len;
+    glm::vec2 perp(-dir.y, dir.x);
+    int count = std::max(1, (int)std::floor(len / spacing));
+    float step = len / count;                       // равномерно, последний фонарь ровно в конце
+
+    for (int i = 0; i <= count; ++i)
+    {
+        glm::vec2 onPath = from + dir * (step * i);                 // точка на оси тропы
+        float side = (i % 2 == 0) ? 1.0f : -1.0f;                   // через один с разных сторон
+        glm::vec2 p = onPath + perp * (side * sideOffset);
+        AddLamp(glm::vec3(p.x, 0.0f, p.y), onPath);                 // рука тянется к тропе
+    }
+}
+
+void World::UploadLights(Shader& shader, float strength) const
+{
+    int n = (int)std::min<size_t>(lampLights.size(), 24);
+    glUniform1i(glGetUniformLocation(shader.ID, "lampCount"), n);
+    glUniform1f(glGetUniformLocation(shader.ID, "lampStrength"), strength);
+    if (n > 0)
+        glUniform3fv(glGetUniformLocation(shader.ID, "lampPos"), n, &lampLights[0].x);
+}
+
+void World::SetPalaceAnchor(float z)
+{
+    palaceAnchored = true;
+    palaceAnchorZ = z;
+    palaceZ = z;
+    // Стена дворца: сквозь него не пройти
+    colliders.push_back(AABB{ glm::vec3(-19.0f, 0.0f, z - 1.2f), glm::vec3(19.0f, 14.0f, z + 1.3f) });
+}
+
+bool World::PalaceDoorNear(const glm::vec3& p) const
+{
+    if (!inPalaceScene || !palaceAnchored) return false;
+    return std::abs(p.x) < 6.0f && p.z < palaceAnchorZ + 8.0f && p.z > palaceAnchorZ;
+}
+
 void World::Update(float dt, const glm::vec3& playerPos)
 {
     for (auto& n : npcs) n.Update(dt, playerPos);
+    viewPos = playerPos;
 
     if (inPalaceScene)
-        palaceZ = playerPos.z - 80.0f;
+        palaceZ = palaceAnchored ? std::max(playerPos.z - 80.0f, palaceAnchorZ) : playerPos.z - 80.0f;
 }
 
 void World::Draw(Shader& shader)
@@ -274,8 +391,13 @@ void World::Draw(Shader& shader)
         p.mesh.Draw(shader, m);
     }
 
+    // На уровне с бегом всё дальше ~130 м полностью растворено туманом (видимость < 1%),
+    // поэтому не рисуем: ~2000 лишних вызовов отрисовки за кадр исчезают.
+    const float kFarDraw = 130.0f;
     for (const FlowerInstance& f : flowers)
     {
+        if (inPalaceScene && std::abs(f.pos.z - viewPos.z) > kFarDraw) continue;
+
         glm::mat4 m = glm::translate(glm::mat4(1.0f), f.pos);
         m = glm::scale(m, f.scale);
         flowerMeshes[f.colorIndex].Draw(shader, m);

@@ -1,32 +1,4 @@
-﻿  Audio.cpp
-  Camera.cpp
-  EBO.cpp
-  imgui.cpp
-  imgui_draw.cpp
-  imgui_impl_glfw.cpp
-  imgui_impl_opengl3.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
+﻿  Player.cpp
   main.cpp
-  Mesh.cpp
-  Model.cpp
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\shared\minwindef.h(130,9): warning C4005: APIENTRY: изменение макроопределения
-  (компиляция исходного файла "Model.cpp")
-      C:\Users\skoko\source\repos\Dream-BBQ-Alternative3\Libraries\include\glad\glad.h(32,9):
-      см. предыдущее определение "APIENTRY"
-  
-  NPC.cpp
-  Player.cpp
-  shaderClass.cpp
-  stb.cpp
-  Texture.cpp
-  UI.cpp
-  VAO.cpp
-C:\Users\skoko\source\repos\Dream-BBQ-Alternative3\VAO.cpp(13,63): warning C4244: аргумент: преобразование "GLsizeiptr" в "GLsizei", возможна потеря данных
-  VBO.cpp
   Создание кода...
-  Компиляция...
-  World.cpp
-  Создание кода...
-  glad.c
   Dream BBQ Alternative 2.vcxproj -> C:\Users\skoko\Source\Repos\Dream-BBQ-Alternative3\x64\Debug\Dream BBQ Alternative 2.exe

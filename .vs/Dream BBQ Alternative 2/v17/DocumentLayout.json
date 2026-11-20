@@ -1,7 +1,20 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{D67BBB2A-7848-4C30-BD77-AA1D36F0F0DC}|Dream BBQ Alternative 2.vcxproj|C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\Player.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D67BBB2A-7848-4C30-BD77-AA1D36F0F0DC}|Dream BBQ Alternative 2.vcxproj|solutionrelative:Player.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D67BBB2A-7848-4C30-BD77-AA1D36F0F0DC}|Dream BBQ Alternative 2.vcxproj|C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\Player.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D67BBB2A-7848-4C30-BD77-AA1D36F0F0DC}|Dream BBQ Alternative 2.vcxproj|solutionrelative:Player.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D67BBB2A-7848-4C30-BD77-AA1D36F0F0DC}|Dream BBQ Alternative 2.vcxproj|C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D67BBB2A-7848-4C30-BD77-AA1D36F0F0DC}|Dream BBQ Alternative 2.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,11 +22,50 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Player.h",
+              "DocumentMoniker": "C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\Player.h",
+              "RelativeDocumentMoniker": "Player.h",
+              "ToolTip": "C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\Player.h*",
+              "RelativeToolTip": "Player.h*",
+              "ViewState": "AgIAAAkAAACA4zp41dMTwCUAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-11-20T07:34:38.321Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Player.cpp",
+              "DocumentMoniker": "C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\Player.cpp",
+              "RelativeDocumentMoniker": "Player.cpp",
+              "ToolTip": "C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\Player.cpp",
+              "RelativeToolTip": "Player.cpp",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAAAGkAAABPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-11-20T07:32:41.041Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\main.cpp",
+              "RelativeDocumentMoniker": "main.cpp",
+              "ToolTip": "C:\\Users\\skoko\\source\\repos\\Dream-BBQ-Alternative3\\main.cpp",
+              "RelativeToolTip": "main.cpp",
+              "ViewState": "AgIAAJ4CAAAAAAAAAAAUwK8CAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-11-20T07:12:15.277Z",
+              "EditorCaption": ""
             }
           ]
         }

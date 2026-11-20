@@ -23,12 +23,14 @@ public:
     float height = 1.8f;
     bool active = true;
     void MakeFish();
+    void MakeDevice();   // маленькое устройство-"якорь" со светящимся индикатором
 
     std::vector<DialogueLine> dialogue;
     std::string givesQuestId; // empty if this NPC doesn't give a quest
     // Патруль: если список не пуст, NPC ходит по точкам по кругу
     std::vector<glm::vec3> patrol;
     float walkSpeed = 1.2f;
+    float noseZ = 0.4f;        // вынос "носа" вперёд от центра
 
     bool talking = false;
 

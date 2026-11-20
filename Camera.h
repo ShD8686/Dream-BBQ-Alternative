@@ -23,6 +23,9 @@ public:
     // enabled = false -> мышь отслеживается, но взгляд не вращается (например, в диалоге)
     void Look(GLFWwindow* window, bool enabled);
 
+    // Повернуть взгляд (yaw -90 = смотреть вдоль -Z, pitch 0 = горизонт)
+    void SetLook(float yawDegrees, float pitchDegrees);
+
     // Кладёт proj * view в uniform шейдера
     void Matrix(Shader& shader, const char* uniform) const;
 

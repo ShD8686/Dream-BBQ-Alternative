@@ -21,6 +21,7 @@ public:
     // Готовые фигуры (удобно для прототипа без моделей)
     static Mesh Box(const glm::vec3& size, const glm::vec3& color);                         // центр в (0,0,0)
     static Mesh Plane(float sizeX, float sizeZ, float uvTiles, const glm::vec3& color);     // пол на y = 0
+    static Mesh Disc(float radius, int segments, const glm::vec3& color);                   // плоский круг на y = 0 (смотрит вверх)
 
 private:
     std::vector<float> vertices;

@@ -30,6 +30,11 @@ public:
     void PlugFountainWithFish();
     void BuildDarkStairsScene();
     void BuildNextScene();
+    // Передать шейдеру положения ламп (strength 0 = выключить подсветку)
+    void UploadLights(Shader& shader, float strength) const;
+    // Устройство "якорь": дворец перестаёт отдаляться и остаётся на месте (z), у него появляется стена
+    void SetPalaceAnchor(float z);
+    bool PalaceDoorNear(const glm::vec3& p) const;
     float GetDarkStairsHeight(float x, float z) const;
     float GetFloorHeight(float x, float z) const;
 
@@ -54,9 +59,18 @@ private:
         glm::vec3 scale;
         int colorIndex;
     };
+    // Фонарь-подсказка: столб, рука в сторону target (x, z), лампа и точечный источник света
+    void AddLamp(const glm::vec3& basePos, const glm::vec2& target);
+    // Цепочка фонарей от точки from до точки to (обе как x, z). Фонари чередуются слева/справа от тропы
+    void AddLampTrail(const glm::vec2& from, const glm::vec2& to, float spacing = 12.0f, float sideOffset = 3.2f);
+
+    glm::vec3 viewPos = glm::vec3(0.0f); // последняя позиция игрока (для отсечения далёких объектов)
     std::vector<Mesh> flowerMeshes;
     std::vector<FlowerInstance> flowers;
     bool inPalaceScene = false;
+    bool palaceAnchored = false;
+    float palaceAnchorZ = 0.0f;
+    std::vector<glm::vec3> lampLights;
     float palaceZ = 0.0f;
     std::vector<Prop> palaceProps;
     bool inDarkStairs = false;
