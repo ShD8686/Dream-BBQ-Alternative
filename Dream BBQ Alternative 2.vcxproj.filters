@@ -175,6 +175,7 @@
     <None Include="light.vert">
       <Filter>Файлы ресурсов\Shaders</Filter>
     </None>
+    <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="location.png">
