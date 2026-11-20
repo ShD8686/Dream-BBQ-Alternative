@@ -15,9 +15,9 @@ Mesh::Mesh(std::vector<float> v, std::vector<GLuint> i, glm::vec3 c)
     EBO1.Bind();
 
     const GLsizeiptr stride = 8 * sizeof(float);
-    VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, stride, (void*)0);                    // позиция
-    VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, stride, (void*)(3 * sizeof(float)));  // нормаль
-    VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, stride, (void*)(6 * sizeof(float)));  // UV
+    VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, stride, (void*)0);                     
+    VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, stride, (void*)(3 * sizeof(float)));   
+    VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, stride, (void*)(6 * sizeof(float)));   
 
     VAO1.Unbind();
     VBO1.Unbind();
@@ -59,7 +59,6 @@ Mesh Mesh::Box(const glm::vec3& size, const glm::vec3& color)
 {
     const glm::vec3 h = size * 0.5f;
 
-    // Нормаль и две оси грани (u × v = n, значит обход против часовой снаружи)
     const glm::vec3 N[6] = { glm::vec3(1,0,0), glm::vec3(-1,0,0), glm::vec3(0,1,0), glm::vec3(0,-1,0), glm::vec3(0,0,1), glm::vec3(0,0,-1) };
     const glm::vec3 U[6] = { glm::vec3(0,1,0), glm::vec3(0,0,1),  glm::vec3(0,0,1), glm::vec3(1,0,0),  glm::vec3(1,0,0), glm::vec3(0,1,0) };
     const glm::vec3 V[6] = { glm::vec3(0,0,1), glm::vec3(0,1,0),  glm::vec3(1,0,0), glm::vec3(0,0,1),  glm::vec3(0,1,0), glm::vec3(1,0,0) };
@@ -92,7 +91,7 @@ Mesh Mesh::Box(const glm::vec3& size, const glm::vec3& color)
 Mesh Mesh::Disc(float radius, int segments, const glm::vec3& color)
 {
     const float twoPi = 6.2831853f;
-    std::vector<float> verts = { 0, 0, 0,  0, 1, 0,  0.5f, 0.5f };   // центр
+    std::vector<float> verts = { 0, 0, 0,  0, 1, 0,  0.5f, 0.5f };    
     std::vector<GLuint> idx;
 
     for (int i = 0; i <= segments; ++i)

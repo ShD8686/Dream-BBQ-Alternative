@@ -22,7 +22,7 @@ void Camera::Look(GLFWwindow* window, bool enabled)
     }
 
     double dx = x - lastX;
-    double dy = lastY - y; // инверсия: мышь вверх = смотреть вверх
+    double dy = lastY - y;       
     lastX = x;
     lastY = y;
 

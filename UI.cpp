@@ -42,8 +42,8 @@ void UI::DrawTimer(float secondsLeft)
 
     ImGui::SetWindowFontScale(1.8f);
     ImVec4 col = (secondsLeft <= 10.0f)
-        ? ImVec4(1.0f, 0.18f, 0.18f, 1.0f)   // Red on last 10 seconds
-        : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);    // White otherwise
+        ? ImVec4(1.0f, 0.18f, 0.18f, 1.0f)        
+        : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);      
 
     char buf[32];
     std::snprintf(buf, sizeof(buf), "%.1f", secondsLeft);
@@ -58,17 +58,17 @@ void UI::DrawVignette(float intensity, float r, float g, float b)
     if (intensity > 1.0f) intensity = 1.0f;
 
     ImVec2 s = ImGui::GetIO().DisplaySize;
-    ImDrawList* dl = ImGui::GetBackgroundDrawList(); // под таймером и текстом, но поверх 3D-сцены
+    ImDrawList* dl = ImGui::GetBackgroundDrawList();        
 
     const int R = (int)(r * 255.0f), G = (int)(g * 255.0f), B = (int)(b * 255.0f);
     const ImU32 edge = IM_COL32(R, G, B, (int)(intensity * 190.0f));
     const ImU32 none = IM_COL32(R, G, B, 0);
     const float bx = s.x * 0.28f, by = s.y * 0.30f;
 
-    dl->AddRectFilledMultiColor(ImVec2(0.0f, 0.0f),      ImVec2(s.x, by),     edge, edge, none, none); // сверху
-    dl->AddRectFilledMultiColor(ImVec2(0.0f, s.y - by),  ImVec2(s.x, s.y),    none, none, edge, edge); // снизу
-    dl->AddRectFilledMultiColor(ImVec2(0.0f, 0.0f),      ImVec2(bx, s.y),     edge, none, none, edge); // слева
-    dl->AddRectFilledMultiColor(ImVec2(s.x - bx, 0.0f),  ImVec2(s.x, s.y),    none, edge, edge, none); // справа
+    dl->AddRectFilledMultiColor(ImVec2(0.0f, 0.0f),      ImVec2(s.x, by),     edge, edge, none, none);  
+    dl->AddRectFilledMultiColor(ImVec2(0.0f, s.y - by),  ImVec2(s.x, s.y),    none, none, edge, edge);  
+    dl->AddRectFilledMultiColor(ImVec2(0.0f, 0.0f),      ImVec2(bx, s.y),     edge, none, none, edge);  
+    dl->AddRectFilledMultiColor(ImVec2(s.x - bx, 0.0f),  ImVec2(s.x, s.y),    none, edge, edge, none);  
 }
 
 void UI::DrawFade(float r, float g, float b, float alpha)
@@ -104,16 +104,13 @@ void UI::DrawBSOD(const std::string& text, bool happy)
     ImGui::End();
 }
 
-// ---------- Реплики авторов ----------
-
-// Время печати одного символа: после конца фразы ("." перед пробелом/концом) и запятой небольшая пауза
 static float CharCost(const std::string& s, size_t i)
 {
     char c = s[i];
     char nx = (i + 1 < s.size()) ? s[i + 1] : ' ';
-    float t = 0.095f;                                   // медленная печать
+    float t = 0.095f;                                     
     if (c == '.' && nx != '.') t += 0.60f;
-    else if (c == '.') t += 0.28f;                      // между точками многоточия
+    else if (c == '.') t += 0.28f;                         
     else if (c == ',') t += 0.30f;
     else if (c == '!' || c == '?') t += 0.50f;
     return t;
@@ -140,7 +137,6 @@ static float Hash01(float x)
     return v - std::floor(v);
 }
 
-// Сдвиг уже добавленных вершин (от индекса v0): нужен для наклона и "срезов" глитча
 template <class F>
 static void ShiftVerts(ImDrawList* dl, int v0, F fn)
 {
@@ -156,7 +152,6 @@ void UI::DrawStoryLine(const StoryLine& line, float t, float fade)
     ImFont* font = ImGui::GetFont();
     const float time = (float)ImGui::GetTime();
 
-    // Сколько символов уже напечатано
     std::string all = JoinSpans(line);
     int shown = 0;
     {
@@ -168,7 +163,6 @@ void UI::DrawStoryLine(const StoryLine& line, float t, float fade)
         }
     }
 
-    // Размер шрифта: крупный, но строка обязана влезть в 90% ширины окна
     float fs = std::max(26.0f, s.y * 0.065f);
     auto totalWidth = [&](float size)
     {
@@ -201,7 +195,6 @@ void UI::DrawStoryLine(const StoryLine& line, float t, float fade)
             }
             else
             {
-                // FREEDOM (красный, наклонённый) и TRUE (зелёный): оба с глитчами, наклон только у красного
                 const bool red = (sp.style == SpanStyle::Freedom);
                 const float slope = red ? 0.28f : 0.0f;
                 const float cy = pos.y + fs;
@@ -216,7 +209,6 @@ void UI::DrawStoryLine(const StoryLine& line, float t, float fade)
                     size_t idx = (size_t)(Hash01(slot + 3.0f) * txt.size()) % txt.size();
                     txt[idx] = junk[(int)(Hash01(slot + 5.0f) * 7.0f) % 7];
                 }
-                // один вызов: текст со сдвигом верхней части (срез глитча) и наклоном
                 auto put = [&](ImVec2 p, ImU32 col, float cut, float dx)
                 {
                     int v0 = dl->VtxBuffer.Size;
@@ -256,7 +248,6 @@ void UI::DrawStoryLine(const StoryLine& line, float t, float fade)
 
 void UI::DrawAchievement(const std::string& title, float t)
 {
-    // Выезд 0.5 с, показ, уезд после 5 с
     const float inT = 0.5f, stay = 5.0f, outT = 0.5f;
     if (t < 0.0f || t > inT + stay + outT) return;
     float slide = 1.0f;
@@ -275,7 +266,6 @@ void UI::DrawAchievement(const std::string& title, float t)
     dl->AddRectFilled(a, b, IM_COL32(28, 28, 32, 235), 8.0f);
     dl->AddRect(a, b, IM_COL32(90, 90, 100, 255), 8.0f, 0, 1.5f);
 
-    // Золотая "медаль" с вопросительным знаком
     ImVec2 c(x + 40.0f, y + h * 0.5f);
     dl->AddCircleFilled(c, 24.0f, IM_COL32(214, 170, 50, 255), 32);
     dl->AddCircle(c, 24.0f, IM_COL32(255, 225, 120, 255), 32, 2.0f);
@@ -368,7 +358,6 @@ void UI::DrawPhoneWindow(GLFWwindow* phoneWindow, float dt, const std::vector<Ph
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
 
-    // Outer phone frame inside the 320x560 OS window
     ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f));
     ImGui::SetNextWindowSize(ImVec2((float)w - 20.0f, (float)h - 20.0f));
 
@@ -386,7 +375,6 @@ void UI::DrawPhoneWindow(GLFWwindow* phoneWindow, float dt, const std::vector<Ph
     ImVec2 winPos = ImGui::GetWindowPos();
     ImVec2 winSize = ImGui::GetWindowSize();
 
-    // Top speaker notch
     float notchW = 84.0f;
     dl->AddRectFilled(
         ImVec2(winPos.x + (winSize.x - notchW) * 0.5f, winPos.y + 8.0f),
@@ -394,7 +382,6 @@ void UI::DrawPhoneWindow(GLFWwindow* phoneWindow, float dt, const std::vector<Ph
         IM_COL32(20, 22, 28, 255), 5.0f
     );
 
-    // Status bar
     ImGui::SetCursorPosY(24.0f);
     ImGui::TextDisabled("12:45");
     ImGui::SameLine(winSize.x - 95.0f);
@@ -402,7 +389,6 @@ void UI::DrawPhoneWindow(GLFWwindow* phoneWindow, float dt, const std::vector<Ph
     ImGui::Separator();
     ImGui::Spacing();
 
-    // App title
     ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.25f, 1.0f), "QUESTS");
     ImGui::Spacing();
 
@@ -429,7 +415,6 @@ void UI::DrawPhoneWindow(GLFWwindow* phoneWindow, float dt, const std::vector<Ph
         }
     }
 
-    // Bottom hint + home bar
     ImGui::SetCursorPosY(winSize.y - 44.0f);
     ImGui::TextDisabled("[TAB] Hide phone");
 

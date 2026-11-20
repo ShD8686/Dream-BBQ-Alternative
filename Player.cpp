@@ -39,7 +39,6 @@ void Player::Update(GLFWwindow* window, float dt, const World& world, bool input
     const float maxStepUp = 0.45f;
     const glm::vec3 startPos = Position;
 
-    // --- горизонталь: ось X и Z по отдельности, чтобы скользить вдоль стен ---
     if (glm::length(move) > 0.0f)
     {
         float moveSpeed = walkSpeed;
@@ -65,7 +64,6 @@ void Player::Update(GLFWwindow* window, float dt, const World& world, bool input
         }
     }
 
-    // --- вертикаль: гравитация, прыжок и плавная лестница ---
     bool wasOnGround = onGround;
     groundY = world.GetFloorHeight(Position.x, Position.z);
 
@@ -80,7 +78,6 @@ void Player::Update(GLFWwindow* window, float dt, const World& world, bool input
     }
     else if (wasOnGround && velocityY <= 0.0f && (Position.y - groundY) < 0.25f)
     {
-        // Smoothly step down stairs without micro-bouncing
         Position.y = groundY;
         velocityY = 0.0f;
         onGround = true;
@@ -92,7 +89,6 @@ void Player::Update(GLFWwindow* window, float dt, const World& world, bool input
 
     camera.Position = EyePosition();
 
-    // --- эффекты бега и спринта: FOV шире + покачивание камеры ---
     if (!runFx)
     {
         camera.fov = baseFov;

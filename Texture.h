@@ -10,7 +10,6 @@ public:
 
     Texture() = default;
 
-    // pixelated = true -> чёткие пиксели (стиль PS1 / пиксель-арт)
     bool Load(const std::string& path, bool pixelated = false);
 
     void Bind(GLuint unit = 0) const;

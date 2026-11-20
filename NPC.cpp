@@ -23,7 +23,7 @@ void NPC::FaceTowards(const glm::vec3& target, float dt)
     if (std::abs(d.x) < 1e-4f && std::abs(d.z) < 1e-4f) return;
 
     float targetYaw = glm::degrees(std::atan2(d.x, d.z));
-    float diff = std::fmod(targetYaw - yaw + 540.0f, 360.0f) - 180.0f; // кратчайший поворот
+    float diff = std::fmod(targetYaw - yaw + 540.0f, 360.0f) - 180.0f;   
     yaw += diff * std::min(1.0f, 8.0f * dt);
 }
 
@@ -42,7 +42,6 @@ void NPC::MakeDevice()
     body->Delete();
     nose->Delete();
     body = std::make_shared<Mesh>(Mesh::Box(glm::vec3(0.50f, 0.90f, 0.50f), glm::vec3(0.22f, 0.24f, 0.30f)));
-    // компонента > 1.0 = светится (см. default.frag)
     nose = std::make_shared<Mesh>(Mesh::Box(glm::vec3(0.32f, 0.20f, 0.10f), glm::vec3(0.30f, 1.50f, 0.55f)));
     height = 0.90f;
     radius = 0.40f;

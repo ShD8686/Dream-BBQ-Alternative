@@ -51,7 +51,6 @@ bool Model::Load(const std::string& path, float scale, bool pixelated)
 
     for (const auto& shape : shapes)
     {
-        // --- объекты "col_*" = коллизия ---
         if (shape.name.rfind("col_", 0) == 0)
         {
             AABB box{ glm::vec3(FLT_MAX), glm::vec3(-FLT_MAX) };
@@ -65,14 +64,13 @@ bool Model::Load(const std::string& path, float scale, bool pixelated)
             continue;
         }
 
-        // --- обычная геометрия: делим по материалам ---
         struct Bucket { std::vector<float> v; std::vector<GLuint> i; };
         std::map<int, Bucket> buckets;
 
         size_t offset = 0;
         for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
         {
-            int fv = shape.mesh.num_face_vertices[f]; // 3 после triangulate
+            int fv = shape.mesh.num_face_vertices[f];    
             int matId = shape.mesh.material_ids[f];
             Bucket& b = buckets[matId];
 

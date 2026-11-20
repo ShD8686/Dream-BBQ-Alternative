@@ -8,7 +8,7 @@
 class Player
 {
 public:
-    glm::vec3 Position;      // позиция НОГ
+    glm::vec3 Position;        
     Camera camera;
 
     float eyeHeight = 1.65f;
@@ -23,21 +23,19 @@ public:
 
     Player(int windowW, int windowH, glm::vec3 startPos);
 
-    // inputEnabled = false -> игрок стоит и не вертит камерой (диалог, меню)
     void Update(GLFWwindow* window, float dt, const World& world, bool inputEnabled);
 
     glm::vec3 EyePosition() const { return Position + glm::vec3(0.0f, eyeHeight, 0.0f); }
 
-    // ---- Эффекты бега (включаются снаружи, например только на уровне с таймером) ----
-    bool runFx = false;        // false = камера как обычно
-    float baseFov = 70.0f;     // обычный угол обзора
-    float runFovKick = 12.0f;  // на сколько градусов шире при беге
-    float bobHeight = 0.05f;   // покачивание камеры вверх-вниз (метры)
-    float bobSway = 0.03f;     // покачивание из стороны в сторону (метры)
-    float bobPerMeter = 1.7f;  // радиан фазы на метр пути (чем больше, тем чаще "шаги")
-    float sprintSpeed = 15.0f;     // make sure this is > runSpeed (e.g. runSpeed * 1.5f)
-    float sprintFovKick = 12.0f;   // stronger FOV kick than runFovKick
-    int sprintKey = GLFW_KEY_LEFT_CONTROL; // change to any GLFW_KEY_* you prefer
+    bool runFx = false;             
+    float baseFov = 70.0f;        
+    float runFovKick = 12.0f;        
+    float bobHeight = 0.05f;       
+    float bobSway = 0.03f;           
+    float bobPerMeter = 1.7f;            
+    float sprintSpeed = 15.0f;               
+    float sprintFovKick = 12.0f;        
+    int sprintKey = GLFW_KEY_LEFT_CONTROL;       
 
 private:
     float velocityY = 0.0f;

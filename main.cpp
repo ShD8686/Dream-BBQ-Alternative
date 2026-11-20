@@ -36,10 +36,6 @@ void framebufferSizeCallback(GLFWwindow*, int w, int h)
 
 int main(int argc, char** argv)
 {
-    // Для тестов: запуск с параметром --run сразу открывает уровень с бегом и таймером,
-    // чтобы не проходить весь квест заново (Visual Studio: Свойства проекта -> Отладка -> Аргументы команды).
-    // Остальные тестовые параметры: --run2 (бег уже с устройством), --stairs2 (вторая локация после провала),
-    // --fail (экран авторов после провала), --bsod (счастливый синий экран), --true (финальный текст).
     bool startAtRun = false, startRun2 = false, startStairs2 = false, startFail = false, startBsod = false, startTrue = false;
     for (int i = 1; i < argc; ++i)
     {
@@ -75,7 +71,6 @@ int main(int argc, char** argv)
 
     glEnable(GL_DEPTH_TEST);
 
-    // 2nd OS window for the phone (hidden at startup)
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     GLFWwindow* phoneWindow = glfwCreateWindow(320, 560, "Phone", NULL, window);
@@ -89,13 +84,11 @@ int main(int argc, char** argv)
 
     Shader shader("default.vert", "default.frag");
 
-    // ---------- Audio ----------
     Audio audio;
     audio.Init();
     audio.PlayMusic("Resources/audio/music_snow.mp3", 0.55f);
     audio.PlayAmbient("Resources/audio/ambient_fog_wind.mp3", 0.45f);
 
-    // ---------- Мир ----------
     World world;
 
     std::vector<Quest> quests = {
@@ -115,25 +108,22 @@ int main(int argc, char** argv)
     glm::vec3 fadeColor(0.0f);
     Scene pendingScene = Scene::SnowWorld;
 
-    // ---------- Сюжет: провал, устройство, концовка ----------
-    int failCount = 0;               // сколько раз игрок не добежал до дворца
-    bool hasDevice = false;          // подобрано устройство: дворец перестаёт убегать
+    int failCount = 0;                      
+    bool hasDevice = false;               
     bool deviceHintShown = false;
     bool enteringPalace = false;
-    const float kPalaceStopZ = -100.0f; // где замирает дворец, когда есть устройство
+    const float kPalaceStopZ = -100.0f;       
     StoryKind storyKind = StoryKind::Fail;
     std::vector<StoryLine> story;
     int storyLine = 0;
     float storyLineT = 0.0f;
-    float achT = -1.0f;              // время с появления ачивки (<0 = ещё не показана)
+    float achT = -1.0f;                       
 
     float palaceTimer = 45.0f;
     int lastCountdownSec = 11;
     float bsodTimer = 0.0f;
     float stepDistance = 0.0f;
 
-    // Собирает первую (снежную) локацию с нуля: карта, NPC, квесты и флаги.
-    // Вызывается при старте и после провала, чтобы игрок проходил первую локацию заново.
     auto resetSnow = [&]()
     {
         world.BuildDemo();
@@ -147,7 +137,6 @@ int main(int argc, char** argv)
         phoneOpen = false;
         customDialogue.clear();
 
-        // 1. NPC near fountain
         NPC cook("Повар", glm::vec3(19.5f, 0.0f, -26.5f), glm::vec3(0.9f, 0.4f, 0.2f));
         cook.givesQuestId = "bring_fish";
         cook.dialogue = {
@@ -159,7 +148,6 @@ int main(int argc, char** argv)
         };
         world.AddNPC(cook);
 
-        // 2. NPC near pyramid
         NPC guard("Охранник", glm::vec3(-11.5f, 0.0f, -0.5f), glm::vec3(0.2f, 0.4f, 0.9f));
         guard.givesQuestId = "clear_fog";
         guard.patrol = { glm::vec3(-17.0f, 0.0f, -0.5f), glm::vec3(-11.0f, 0.0f, -0.5f) };
@@ -169,7 +157,6 @@ int main(int argc, char** argv)
         };
         world.AddNPC(guard);
 
-        // 3. Collectable Fish NPC hidden near a far corner
         NPC fish("Рыба", glm::vec3(-46.0f, 0.0f, 46.0f));
         fish.MakeFish();
         fish.dialogue = {
@@ -202,7 +189,6 @@ int main(int argc, char** argv)
         story.clear();
         if (kind == StoryKind::Fail)
         {
-            // Каждая фраза после многоточия - отдельный экран: появилась, прочиталась, исчезла, пауза в темноте
             if (failCount <= 1)
             {
                 story.push_back({ { N("Your device ran into a problem and needs to restart.") }, 1.5f });
@@ -213,7 +199,7 @@ int main(int argc, char** argv)
                 story.push_back({ { N("99% complete") }, 3.0f, 1.0f });
                 story.push_back({ { N("100% complete") }, 3.0f, 1.0f });
             }
-            else // повторный провал без устройства: подсказка
+            else      
             {
                 story.push_back({ { N("Skill issues ")}, 2.5f });
                 story.push_back({ { N("Maybe you should look behind you...") }, 3.0f, 1.0f });
@@ -225,12 +211,12 @@ int main(int argc, char** argv)
             story.push_back({ { N("So you know this party kinda sucks") }, 1.8f });
             story.push_back({ { N("We probably have to find better things to do") }, 1.5f });
             StoryLine prize{ { N("Here is your prize") }, 3.5f };
-            prize.achievement = true;                       // на этой строке выезжает ачивка
+            prize.achievement = true;                            
             story.push_back(prize);
             story.push_back({ { N("Thanks for playing!") }, 4.0f, 0.0f });
         }
         storyLine = 0;
-        storyLineT = (kind == StoryKind::Fail) ? -10.0f : 0.0f; // после провала ~10 с чёрного экрана до первых слов
+        storyLineT = (kind == StoryKind::Fail) ? -10.0f : 0.0f;          
         achT = -1.0f;
         scene = Scene::Story;
         state = State::Playing;
@@ -239,7 +225,6 @@ int main(int argc, char** argv)
         audio.StopAmbient();
     };
 
-    // ---------- Игровой цикл ----------
     if (startStairs2)
     {
         failCount = 1;
@@ -254,7 +239,6 @@ int main(int argc, char** argv)
     if (startRun2) hasDevice = true;
     if (startAtRun)
     {
-        // Чёрный/белый экран сразу, а смена сцены произойдёт в первом кадре тем же путём, что и в игре
         fadeState = FadeState::FadeOut;
         fadeAlpha = 1.0f;
         fadeColor = glm::vec3(1.0f);
@@ -293,7 +277,6 @@ int main(int argc, char** argv)
                 glfwHideWindow(phoneWindow);
         }
 
-        // ---------- Fade Transition Update ----------
         const float fadeSpeed = 0.5f;
         if (fadeState == FadeState::FadeOut)
         {
@@ -305,7 +288,6 @@ int main(int argc, char** argv)
 
                 if (pendingScene == Scene::SnowWorld)
                 {
-                    // Игрок начинает заново с первой локации
                     scene = Scene::SnowWorld;
                     resetSnow();
                     hidePhone();
@@ -321,14 +303,13 @@ int main(int argc, char** argv)
                     world.BuildDarkStairsScene();
                     player.Position = glm::vec3(0.0f, 0.0f, 22.0f);
                     player.groundY = 0.0f;
-                    player.camera.SetLook(-90.0f, 0.0f); // лицом к лестнице, устройство окажется сзади
+                    player.camera.SetLook(-90.0f, 0.0f);       
 
-                    // После провала: на второй локации сзади игрока появляется устройство
                     if (failCount > 0 && !hasDevice)
                     {
                         NPC device("Device", glm::vec3(0.0f, 0.0f, 26.0f), glm::vec3(0.2f));
                         device.MakeDevice();
-                        device.yaw = 180.0f; // индикатором к месту, где стоит игрок
+                        device.yaw = 180.0f;       
                         device.dialogue = {
                             { "Device", "A small box, warm to the touch. A tiny green light is blinking." },
                             { "Device", "Something is written on the side: \"ANCHOR. Keeps things in one place.\"" },
@@ -360,11 +341,11 @@ int main(int argc, char** argv)
                     world.BuildNextScene();
                     player.Position = glm::vec3(0.0f, 0.0f, 110.0f);
                     player.groundY = 0.0f;
-                    player.camera.SetLook(-90.0f, 0.0f); // смотрим вдоль дороги, куда бежать
+                    player.camera.SetLook(-90.0f, 0.0f);      
                     palaceTimer = 40.0f;
                     lastCountdownSec = 11;
                     enteringPalace = false;
-                    if (hasDevice) world.SetPalaceAnchor(kPalaceStopZ); // устройство держит дворец на месте
+                    if (hasDevice) world.SetPalaceAnchor(kPalaceStopZ);      
 
                     quests.erase(std::remove_if(quests.begin(), quests.end(),
                         [](const Quest& q) { return q.id == "palace"; }), quests.end());
@@ -376,7 +357,6 @@ int main(int argc, char** argv)
                 }
                 else if (pendingScene == Scene::BSOD)
                 {
-                    // Вошли во дворец: счастливый синий экран
                     scene = Scene::BSOD;
                     bsodTimer = 0.0f;
                     hidePhone();
@@ -394,7 +374,6 @@ int main(int argc, char** argv)
                 fadeAlpha = 0.0f;
                 fadeState = FadeState::None;
 
-                // Automatically start dialogue once inside the dark room
                 if (scene == Scene::DarkStairs && !darkIntroShown)
                 {
                     darkIntroShown = true;
@@ -424,11 +403,10 @@ int main(int argc, char** argv)
             }
         }
 
-        // ---------- Update ----------
         if (scene == Scene::BSOD)
         {
             bsodTimer += dt;
-            if (bsodTimer >= 5.0f)          // ~5 секунд счастливого синего экрана, потом слово авторов
+            if (bsodTimer >= 5.0f)                  
                 startStory(StoryKind::TrueEnd);
         }
         else if (scene == Scene::Story)
@@ -442,11 +420,9 @@ int main(int argc, char** argv)
                 const float typeD = UI::StoryTypeDuration(L);
                 const float total = typeD + L.hold + 0.8f + L.gap;
 
-                // E после того, как строка допечаталась, пропускает паузу
                 if (ePressed && storyLineT > typeD + 0.4f && storyLineT < typeD + L.hold)
                     storyLineT = typeD + L.hold;
 
-                // Ачивка выезжает, когда допечатана строка "Here is your prize"
                 if (L.achievement && achT < 0.0f && storyLineT >= typeD)
                 {
                     achT = 0.0f;
@@ -461,7 +437,6 @@ int main(int argc, char** argv)
                     {
                         if (storyKind == StoryKind::Fail)
                         {
-                            // Игра начинается заново с первой локации (экран уже чёрный)
                             fadeState = FadeState::FadeOut;
                             fadeAlpha = 1.0f;
                             fadeColor = glm::vec3(0.0f);
@@ -478,7 +453,7 @@ int main(int argc, char** argv)
         else
         {
             bool canControl = (state == State::Playing && fadeState == FadeState::None);
-            player.runFx = (scene == Scene::NextScene); // эффекты бега только на уровне с таймером
+            player.runFx = (scene == Scene::NextScene);        
             glm::vec3 prevPos = player.Position;
             player.Update(window, dt, world, canControl);
 
@@ -500,12 +475,11 @@ int main(int argc, char** argv)
 
             if (scene == Scene::DarkStairs && fadeState == FadeState::None)
             {
-                // Walk into white exit rectangle -> Fade to White -> Palace Scene
                 if (std::abs(player.Position.x) < 1.8f && player.Position.z < -23.8f && player.Position.y >= 4.2f)
                 {
                     fadeState = FadeState::FadeOut;
                     fadeAlpha = 0.0f;
-                    fadeColor = glm::vec3(1.0f, 1.0f, 1.0f); // White fade
+                    fadeColor = glm::vec3(1.0f, 1.0f, 1.0f);   
                     pendingScene = Scene::NextScene;
                     audio.PlaySFX("Resources/audio/sfx_exit_white.wav");
                 }
@@ -525,7 +499,7 @@ int main(int argc, char** argv)
                 {
                     palaceTimer = 0.0f;
                     failCount++;
-                    startStory(StoryKind::Fail); // чёрный экран, слова авторов
+                    startStory(StoryKind::Fail);     
                 }
             }
 
@@ -592,7 +566,7 @@ int main(int argc, char** argv)
                         audio.PlaySFX("Resources/audio/sfx_talk_guard.wav");
                 }
             }
-            else // Dialogue
+            else  
             {
                 const auto& lines = talkingTo ? talkingTo->dialogue : customDialogue;
                 bool completedDialogue = false;
@@ -678,7 +652,6 @@ int main(int argc, char** argv)
             }
         }
 
-        // ---------- Render Main Window ----------
         if (scene == Scene::BSOD)
         {
             glClearColor(0.0f, 0.47f, 0.84f, 1.0f);
@@ -730,8 +703,8 @@ int main(int argc, char** argv)
                 glUniform3f(glGetUniformLocation(shader.ID, "lightDir"), -0.4f, -1.0f, -0.3f);
 
             float fog = 0.0f;
-            if (scene == Scene::SnowWorld && !fogCleared) fog = 0.040f; // гуще, чтобы фонари не выдавали маршрут
-            else if (scene == Scene::NextScene)          fog = 0.017f; // Thicker fog, palace faintly visible
+            if (scene == Scene::SnowWorld && !fogCleared) fog = 0.040f;       
+            else if (scene == Scene::NextScene)          fog = 0.017f;      
             glUniform1f(glGetUniformLocation(shader.ID, "fogDensity"), fog);
 
             glm::vec3 camPos = player.EyePosition();
@@ -745,11 +718,10 @@ int main(int argc, char** argv)
             ui.DrawFPS(1.0f / (dt > 0.0001f ? dt : 0.0001f));
             if (scene == Scene::NextScene)
             {
-                // Последние 10 секунд: чёрная пульсирующая рамка, чем ближе к нулю - тем сильнее и чаще
                 if (!hasDevice && palaceTimer <= 10.0f)
                 {
-                    float urgency = 1.0f - palaceTimer / 10.0f;                              // 0 -> 1
-                    float pulse = 0.5f + 0.5f * std::sin((float)now * (6.0f + 8.0f * urgency)); // 0..1
+                    float urgency = 1.0f - palaceTimer / 10.0f;                                 
+                    float pulse = 0.5f + 0.5f * std::sin((float)now * (6.0f + 8.0f * urgency));  
                     ui.DrawVignette(urgency * (0.45f + 0.55f * pulse), 0.0f, 0.0f, 0.0f);
                 }
                 if (!hasDevice) ui.DrawTimer(palaceTimer);
@@ -781,7 +753,6 @@ int main(int argc, char** argv)
 
         glfwSwapBuffers(window);
 
-        // ---------- Render Phone Window ----------
         if (phoneWindow && scene != Scene::BSOD && scene != Scene::Story)
         {
             if (phoneOpen && !glfwGetWindowAttrib(phoneWindow, GLFW_VISIBLE))

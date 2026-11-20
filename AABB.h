@@ -1,7 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
 
-// Коробка для коллизий (оси совпадают с осями мира)
 struct AABB
 {
     glm::vec3 min;
