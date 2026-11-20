@@ -16,6 +16,7 @@ uniform float fogDensity;
 uniform int   lampCount;
 uniform vec3  lampPos[24];
 uniform float lampStrength;
+uniform float lampBoost;   // > 0: лампа еще и добавляет свет (для тёмных комнат)
 
 void main()
 {
@@ -44,6 +45,7 @@ void main()
         lamp = clamp(lamp * lampStrength, 0.0, 1.0);
         vec3 warm = vec3(1.00, 0.74, 0.38);
         litColor = mix(litColor, litColor * warm * 1.12, lamp * 0.55);
+        litColor += (base.rgb * 0.5 + 0.5) * warm * (lamp * lampBoost * 0.60);  // абсолютный тёплый свет: виден даже на почти чёрном полу
     }
 
     // Светящиеся объекты (лампы фонарей): цвет с компонентой > 1.0 считается источником света.

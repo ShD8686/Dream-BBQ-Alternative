@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <cstdio>
 #include <algorithm>
 
 #include "shaderClass.h"
@@ -70,6 +71,9 @@ int main(int argc, char** argv)
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);             
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -125,45 +129,45 @@ int main(int argc, char** argv)
     float stepDistance = 0.0f;
 
     auto resetSnow = [&]()
-    {
-        world.BuildDemo();
-        quests = {
-            { "clear_fog",  "Make fog disappear", false, false },
-            { "bring_fish", "Bring fish to NPC",  false, false }
-        };
-        hasFish = false;
-        fishDelivered = false;
-        fogCleared = false;
-        phoneOpen = false;
-        customDialogue.clear();
+        {
+            world.BuildDemo();
+            quests = {
+                { "clear_fog",  "Make fog disappear", false, false },
+                { "bring_fish", "Bring fish to NPC",  false, false }
+            };
+            hasFish = false;
+            fishDelivered = false;
+            fogCleared = false;
+            phoneOpen = false;
+            customDialogue.clear();
 
-        NPC cook("Повар", glm::vec3(19.5f, 0.0f, -26.5f), glm::vec3(0.9f, 0.4f, 0.2f));
-        cook.givesQuestId = "bring_fish";
-        cook.dialogue = {
-            { "Why is this?", "Well hello, my dear friend! You probably wondering why there is so many fog, yes?" },
-            { "Weirdo", "As you can see behind me there is a fountaion, that have heated water" },
-            { "Weirdo", "In this cold place it's starting to vaporise." },
-            { "Weirdo", "If you just could bring me a fish, I could think about how we could solve that." },
-            { "Weirdo", "Give a man a bread and you feed him for a day; give man a fish and and he solves all your problem or something." }
-        };
-        world.AddNPC(cook);
+            NPC cook("Повар", glm::vec3(19.5f, 0.0f, -26.5f), glm::vec3(0.9f, 0.4f, 0.2f));
+            cook.givesQuestId = "bring_fish";
+            cook.dialogue = {
+                { "Who is this?", "Well hello, my dear friend! You probably wondering why there is so many fog, yes?" },
+                { "Weirdo", "As you can see behind me there is a fountaion, that have heated water" },
+                { "Weirdo", "In this cold place it's starting to vaporise." },
+                { "Weirdo", "If you just could bring me a fish, I could think about how we could solve that." },
+                { "Weirdo", "Give a man a bread and you feed him for a day; give man a fish and and he solves all your problem or something." }
+            };
+            world.AddNPC(cook);
 
-        NPC guard("Охранник", glm::vec3(-11.5f, 0.0f, -0.5f), glm::vec3(0.2f, 0.4f, 0.9f));
-        guard.givesQuestId = "clear_fog";
-        guard.patrol = { glm::vec3(-17.0f, 0.0f, -0.5f), glm::vec3(-11.0f, 0.0f, -0.5f) };
-        guard.dialogue = {
-            { "Bouncer", "Wait wait wait, face control first. I can't just allow anyone to come to this mega Halloween Party!" },
-            { "Bouncer", "However with that thick fog it's not like I could see your face anyway. Probably today is not your lucky day" }
-        };
-        world.AddNPC(guard);
+            NPC guard("Охранник", glm::vec3(-11.5f, 0.0f, -0.5f), glm::vec3(0.2f, 0.4f, 0.9f));
+            guard.givesQuestId = "clear_fog";
+            guard.patrol = { glm::vec3(-17.0f, 0.0f, -0.5f), glm::vec3(-11.0f, 0.0f, -0.5f) };
+            guard.dialogue = {
+                { "Bouncer", "Wait wait wait, face control first. I can't just allow anyone to come to this mega Halloween Party!" },
+                { "Bouncer", "However with that thick fog it's not like I could see your face anyway. Probably today is not your lucky day" }
+            };
+            world.AddNPC(guard);
 
-        NPC fish("Рыба", glm::vec3(-46.0f, 0.0f, 46.0f));
-        fish.MakeFish();
-        fish.dialogue = {
-            { "Fish", "Just imagine, I just got my bachelors diploma and now I can start to build my future! Hey, what are you d..." }
+            NPC fish("Рыба", glm::vec3(-46.0f, 0.0f, 46.0f));
+            fish.MakeFish();
+            fish.dialogue = {
+                { "Fish", "Just imagine, I just got my bachelors diploma and now I can start to build my future! Hey, what are you d..." }
+            };
+            world.AddNPC(fish);
         };
-        world.AddNPC(fish);
-    };
     resetSnow();
 
     Player player(W, H, glm::vec3(0.0f, 0.0f, 8.0f));
@@ -177,53 +181,53 @@ int main(int argc, char** argv)
     auto FR = [](const char* t) { return StorySpan{ t, SpanStyle::Freedom }; };
     auto TR = [](const char* t) { return StorySpan{ t, SpanStyle::True }; };
     auto hidePhone = [&]()
-    {
-        phoneOpen = false;
-        if (phoneWindow && glfwGetWindowAttrib(phoneWindow, GLFW_VISIBLE))
-            glfwHideWindow(phoneWindow);
-    };
+        {
+            phoneOpen = false;
+            if (phoneWindow && glfwGetWindowAttrib(phoneWindow, GLFW_VISIBLE))
+                glfwHideWindow(phoneWindow);
+        };
     State state = State::Playing;
     auto startStory = [&](StoryKind kind)
-    {
-        storyKind = kind;
-        story.clear();
-        if (kind == StoryKind::Fail)
         {
-            if (failCount <= 1)
+            storyKind = kind;
+            story.clear();
+            if (kind == StoryKind::Fail)
             {
-                story.push_back({ { N("Your device ran into a problem and needs to restart.") }, 1.5f });
-                story.push_back({ { N("Stop code: EXCEPTION_ANCHOR_NOT_FOUND_OR_EXIST.") }, 1.5f });
-                story.push_back({ { N("0% complete") }, 3.0f, 1.0f });
-                story.push_back({ { N("43% complete") }, 3.0f, 1.0f });
-                story.push_back({ { N("75% complete") }, 3.0f, 1.0f });
-                story.push_back({ { N("99% complete") }, 3.0f, 1.0f });
-                story.push_back({ { N("100% complete") }, 3.0f, 1.0f });
+                if (failCount <= 1)
+                {
+                    story.push_back({ { N("Your device ran into a problem and needs to restart.") }, 1.5f });
+                    story.push_back({ { N("Stop code: EXCEPTION_ANCHOR_NOT_FOUND_OR_EXIST.") }, 1.5f });
+                    story.push_back({ { N("0% complete") }, 3.0f, 1.0f });
+                    story.push_back({ { N("43% complete") }, 3.0f, 1.0f });
+                    story.push_back({ { N("75% complete") }, 3.0f, 1.0f });
+                    story.push_back({ { N("99% complete") }, 3.0f, 1.0f });
+                    story.push_back({ { N("100% complete") }, 3.0f, 1.0f });
+                }
+                else      
+                {
+                    story.push_back({ { N("Skill issues ")}, 2.5f });
+                    story.push_back({ { N("Maybe you should look behind you...") }, 3.0f, 1.0f });
+                }
             }
-            else      
+            else
             {
-                story.push_back({ { N("Skill issues ")}, 2.5f });
-                story.push_back({ { N("Maybe you should look behind you...") }, 3.0f, 1.0f });
+                story.push_back({ { N("Oh, it's you again!") }, 2.0f });
+                story.push_back({ { N("So you know this party kinda sucks") }, 1.8f });
+                story.push_back({ { N("We probably have to find better things to do") }, 1.5f });
+                StoryLine prize{ { N("Here is your prize") }, 3.5f };
+                prize.achievement = true;
+                story.push_back(prize);
+                story.push_back({ { N("Thanks for playing!") }, 4.0f, 0.0f });
             }
-        }
-        else
-        {
-            story.push_back({ { N("Oh, it's you again!") }, 2.0f });
-            story.push_back({ { N("So you know this party kinda sucks") }, 1.8f });
-            story.push_back({ { N("We probably have to find better things to do") }, 1.5f });
-            StoryLine prize{ { N("Here is your prize") }, 3.5f };
-            prize.achievement = true;                            
-            story.push_back(prize);
-            story.push_back({ { N("Thanks for playing!") }, 4.0f, 0.0f });
-        }
-        storyLine = 0;
-        storyLineT = (kind == StoryKind::Fail) ? -10.0f : 0.0f;          
-        achT = -1.0f;
-        scene = Scene::Story;
-        state = State::Playing;
-        hidePhone();
-        audio.StopMusic();
-        audio.StopAmbient();
-    };
+            storyLine = 0;
+            storyLineT = (kind == StoryKind::Fail) ? -10.0f : 0.0f;          
+            achT = -1.0f;
+            scene = Scene::Story;
+            state = State::Playing;
+            hidePhone();
+            audio.StopMusic();
+            audio.StopAmbient();
+        };
 
     if (startStairs2)
     {
@@ -248,6 +252,9 @@ int main(int argc, char** argv)
     NPC* talkingTo = nullptr;
     int lineIndex = 0;
     bool prevE = false, prevEsc = false, prevTab = false;
+    bool prevF1 = false, prevH = false, prevP = false, prevF3 = false;
+    bool showHelp = false, paused = false, atmosphereOn = true;
+    float sunAngle = 0.0f;                 
     double lastTime = glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
@@ -256,6 +263,7 @@ int main(int argc, char** argv)
         float dt = (float)(now - lastTime);
         lastTime = now;
         if (dt > 0.05f) dt = 0.05f;
+        const float realDt = dt;           
 
         glfwPollEvents();
 
@@ -268,6 +276,29 @@ int main(int argc, char** argv)
         prevE = eDown;
         prevEsc = escDown;
         prevTab = tabDown;
+
+        {
+            auto once = [&](int key, bool& prev)
+                {
+                    bool d = glfwGetKey(window, key) == GLFW_PRESS;
+                    bool r = d && !prev;
+                    prev = d;
+                    return r;
+                };
+            const bool gameplay = (scene != Scene::BSOD && scene != Scene::Story);
+            bool f1 = once(GLFW_KEY_F1, prevF1), h = once(GLFW_KEY_H, prevH);
+            bool p = once(GLFW_KEY_P, prevP), f3 = once(GLFW_KEY_F3, prevF3);
+            if (gameplay)
+            {
+                if (f1 || h) showHelp = !showHelp;
+                if (p) paused = !paused;
+                if (f3) atmosphereOn = !atmosphereOn;
+                if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)  sunAngle -= 1.2f * realDt;
+                if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) sunAngle += 1.2f * realDt;
+            }
+            else { showHelp = false; paused = false; }
+            if (paused || showHelp) dt = 0.0f;          
+        }
 
         if (tabPressed && phoneWindow && scene != Scene::BSOD && scene != Scene::Story)
         {
@@ -312,10 +343,11 @@ int main(int argc, char** argv)
                         device.yaw = 180.0f;       
                         device.dialogue = {
                             { "Device", "A small box, warm to the touch. A tiny green light is blinking." },
-                            { "Device", "Something is written on the side: \"ANCHOR. Keeps things in one place.\"" },
+                            { "Device", "Something is written on the side: \"ANCHOR. Keeps things that run away in one place.\"" },
                             { "Device", "You take it with you." }
                         };
                         world.AddNPC(device);
+                        world.AddSwingLamp(0.0f, 26.0f);     
                     }
 
                     bool hasExitQuest = false;
@@ -393,7 +425,7 @@ int main(int argc, char** argv)
                 else if (scene == Scene::DarkStairs && failCount > 0 && !hasDevice && !deviceHintShown)
                 {
                     deviceHintShown = true;
-                    customDialogue = { { "???", "Behind you." } };
+                    customDialogue = { { "???", "Something has appeared behind you." } };
                     talkingTo = nullptr;
                     lineIndex = 0;
                     state = State::Dialogue;
@@ -658,7 +690,7 @@ int main(int argc, char** argv)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             ui.BeginFrame();
-            ui.DrawBSOD("Something wong!", true);
+            ui.DrawBSOD("Freedom!", true);
             ui.EndFrame();
         }
         else if (scene == Scene::Story)
@@ -700,22 +732,34 @@ int main(int argc, char** argv)
             if (scene == Scene::DarkStairs)
                 glUniform3f(glGetUniformLocation(shader.ID, "lightDir"), 0.0f, -0.3f, -1.0f);
             else
-                glUniform3f(glGetUniformLocation(shader.ID, "lightDir"), -0.4f, -1.0f, -0.3f);
+            {
+                const float c = std::cos(sunAngle), sn = std::sin(sunAngle);
+                glUniform3f(glGetUniformLocation(shader.ID, "lightDir"), -0.4f * c + 0.3f * sn, -1.0f, -0.4f * sn - 0.3f * c);
+            }
 
             float fog = 0.0f;
             if (scene == Scene::SnowWorld && !fogCleared) fog = 0.040f;       
             else if (scene == Scene::NextScene)          fog = 0.017f;      
+            if (!atmosphereOn) fog = 0.0f;              
             glUniform1f(glGetUniformLocation(shader.ID, "fogDensity"), fog);
 
             glm::vec3 camPos = player.EyePosition();
             glUniform3f(glGetUniformLocation(shader.ID, "camPos"), camPos.x, camPos.y, camPos.z);
 
-            world.UploadLights(shader, (scene == Scene::SnowWorld && !fogCleared) ? 1.0f : 0.0f);
+            world.UploadLights(shader, scene == Scene::DarkStairs ? 1.0f : ((atmosphereOn && scene == Scene::SnowWorld && !fogCleared) ? 1.0f : 0.0f));
             world.Draw(shader);
 
             ui.BeginFrame();
             ui.DrawCrosshair();
-            ui.DrawFPS(1.0f / (dt > 0.0001f ? dt : 0.0001f));
+            ui.DrawFPS(1.0f / (realDt > 0.0001f ? realDt : 0.0001f));
+            {
+                const char* loc = scene == Scene::SnowWorld ? "Snow World" : scene == Scene::DarkStairs ? "Dark Stairs" : "The Road";
+                char b2[200];
+                std::snprintf(b2, sizeof(b2), "Location: %s  |  Fog + lamp light (F3): %s  |  Sun: %d deg%s  |  F1 / H - help",
+                    loc, atmosphereOn ? "ON" : "OFF", (int)std::lround(glm::degrees(sunAngle)), paused ? "  |  PAUSED" : "");
+                ui.DrawHud("Dream BBQ Alternative  |  Project #7  |  Daniyal Abrayev, Damir Sheneusizov (SE-2411)", b2);
+                if (showHelp) ui.DrawHelp();
+            }
             if (scene == Scene::NextScene)
             {
                 if (!hasDevice && palaceTimer <= 10.0f)

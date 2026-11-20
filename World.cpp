@@ -22,6 +22,9 @@ void World::Clear()
     palaceAnchored = false;
     palaceAnchorZ = 0.0f;
     lampLights.clear();
+    swingActive = false;
+    swingCord.reset();
+    swingBulb.reset();
     palaceZ = 0.0f;
 }
 
@@ -93,9 +96,9 @@ void World::BuildDemo()
     waterStreamIndices.push_back(props.size());
     AddBox(glm::vec3(fx - 1.35f, 1.325f, fz), glm::vec3(0.12f, 1.65f, 0.5f), splashColor, false);
 
-    AddLampTrail(glm::vec2(2.0f, 3.0f),    glm::vec2(17.0f, -22.0f));         
-    AddLampTrail(glm::vec2(-4.0f, 14.0f),  glm::vec2(-39.0f, 40.0f));        
-    AddLampTrail(glm::vec2(-5.0f, 3.0f),   glm::vec2(-13.0f, 0.5f));
+    AddLampTrail(glm::vec2(2.0f, 3.0f), glm::vec2(17.0f, -22.0f));         
+    AddLampTrail(glm::vec2(-4.0f, 14.0f), glm::vec2(-39.0f, 40.0f));        
+    AddLampTrail(glm::vec2(-5.0f, 3.0f), glm::vec2(-13.0f, 0.5f));
     AddLamp(glm::vec3(29.5f, 0.0f, -27.0f), glm::vec2(24.0f, -30.0f));
     AddLamp(glm::vec3(-43.5f, 0.0f, 49.0f), glm::vec2(-46.0f, 46.0f));
     AddLamp(glm::vec3(-49.0f, 0.0f, 43.0f), glm::vec2(-46.0f, 46.0f));
@@ -290,13 +293,13 @@ void World::AddLamp(const glm::vec3& b, const glm::vec2& target)
     AddBox(b + glm::vec3(0.0f, 3.4f, 0.0f), glm::vec3(0.30f, 0.10f, 0.30f), metalDark, false);
 
     auto part = [&](float along, float height, const glm::vec3& size, const glm::vec3& color)
-    {
-        glm::vec3 pos = b + glm::vec3(along * dir.x, height, along * dir.y);
-        props.push_back(Prop{ Mesh::Box(size, color), pos, glm::vec3(0.0f, yaw, 0.0f) });
-    };
+        {
+            glm::vec3 pos = b + glm::vec3(along * dir.x, height, along * dir.y);
+            props.push_back(Prop{ Mesh::Box(size, color), pos, glm::vec3(0.0f, yaw, 0.0f) });
+        };
     part(armLen * 0.5f, poleTop - 0.10f, glm::vec3(armLen + 0.2f, 0.14f, 0.14f), metal);    
-    part(armLen,        poleTop - 0.24f, glm::vec3(1.00f, 0.16f, 0.56f), metalDark);         
-    part(armLen,        poleTop - 0.35f, glm::vec3(0.90f, 0.08f, 0.45f), bulb);              
+    part(armLen, poleTop - 0.24f, glm::vec3(1.00f, 0.16f, 0.56f), metalDark);         
+    part(armLen, poleTop - 0.35f, glm::vec3(0.90f, 0.08f, 0.45f), bulb);              
 
     lampLights.push_back(b + glm::vec3(dir.x * armLen, poleTop - 0.45f, dir.y * armLen));
 }
@@ -323,11 +326,38 @@ void World::AddLampTrail(const glm::vec2& from, const glm::vec2& to, float spaci
 
 void World::UploadLights(Shader& shader, float strength) const
 {
-    int n = (int)std::min<size_t>(lampLights.size(), 24);
+    std::vector<glm::vec3> all = lampLights;
+    if (swingActive) all.push_back(SwingBulbPos());          
+    int n = (int)std::min<size_t>(all.size(), 24);
     glUniform1i(glGetUniformLocation(shader.ID, "lampCount"), n);
     glUniform1f(glGetUniformLocation(shader.ID, "lampStrength"), strength);
+    glUniform1f(glGetUniformLocation(shader.ID, "lampBoost"), swingActive ? 1.1f : 0.0f);
     if (n > 0)
-        glUniform3fv(glGetUniformLocation(shader.ID, "lampPos"), n, &lampLights[0].x);
+        glUniform3fv(glGetUniformLocation(shader.ID, "lampPos"), n, &all[0].x);
+}
+
+float World::SwingAngle() const
+{
+    return 0.55f * std::sin(swingTime * 1.6f);                   
+}
+
+glm::vec3 World::SwingBulbPos() const
+{
+    float a = SwingAngle();
+    return swingPivot + glm::vec3(std::sin(a) * swingLen, -std::cos(a) * swingLen, 0.0f);
+}
+
+void World::AddSwingLamp(float x, float z)
+{
+    const glm::vec3 metal(0.16f, 0.17f, 0.20f);
+    AddBox(glm::vec3(x - 1.5f, 2.1f, z), glm::vec3(0.16f, 4.2f, 0.16f), metal, true);         
+    AddBox(glm::vec3(x - 0.75f, 4.12f, z), glm::vec3(1.65f, 0.12f, 0.12f), metal, false);     
+    swingPivot = glm::vec3(x, 4.06f, z);
+    swingLen = 1.5f;
+    swingTime = 0.0f;
+    swingCord = std::make_unique<Mesh>(Mesh::Box(glm::vec3(0.03f, 1.0f, 0.03f), glm::vec3(0.10f, 0.10f, 0.12f)));
+    swingBulb = std::make_unique<Mesh>(Mesh::Box(glm::vec3(0.26f, 0.26f, 0.26f), glm::vec3(1.65f, 1.15f, 0.48f)));     
+    swingActive = true;
 }
 
 void World::SetPalaceAnchor(float z)
@@ -348,6 +378,7 @@ void World::Update(float dt, const glm::vec3& playerPos)
 {
     for (auto& n : npcs) n.Update(dt, playerPos);
     viewPos = playerPos;
+    if (swingActive) swingTime += dt;
 
     if (inPalaceScene)
         palaceZ = palaceAnchored ? std::max(playerPos.z - 80.0f, palaceAnchorZ) : playerPos.z - 80.0f;
@@ -381,6 +412,14 @@ void World::Draw(Shader& shader)
         p.mesh.Draw(shader, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, palaceZ) + p.position));
 
     for (auto& n : npcs) n.Draw(shader);
+
+    if (swingActive)
+    {
+        float a = SwingAngle();
+        glm::mat4 base = glm::rotate(glm::translate(glm::mat4(1.0f), swingPivot), a, glm::vec3(0, 0, 1));
+        swingCord->Draw(shader, glm::scale(glm::translate(base, glm::vec3(0.0f, -swingLen * 0.5f, 0.0f)), glm::vec3(1.0f, swingLen, 1.0f)));
+        swingBulb->Draw(shader, glm::translate(base, glm::vec3(0.0f, -swingLen, 0.0f)));
+    }
 }
 
 void World::Delete()
@@ -391,6 +430,8 @@ void World::Delete()
     for (auto& p : palaceProps) p.mesh.Delete();
     for (auto& fm : flowerMeshes) fm.Delete();
     for (auto& n : npcs) n.Delete();
+    if (swingCord) swingCord->Delete();
+    if (swingBulb) swingBulb->Delete();
 }
 
 bool World::Collides(const glm::vec3& feet, float radius, float height) const
