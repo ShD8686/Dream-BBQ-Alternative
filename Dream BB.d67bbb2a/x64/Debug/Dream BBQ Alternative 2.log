@@ -1,1 +1,7 @@
-﻿  Dream BBQ Alternative 2.vcxproj -> C:\Users\skoko\Source\Repos\Dream-BBQ-Alternative3\x64\Debug\Dream BBQ Alternative 2.exe
+﻿  Player.cpp
+  UI.cpp
+  World.cpp
+  main.cpp
+  Создание кода...
+  LINK : не найден или не выполнена сборка C:\Users\skoko\Source\Repos\Dream-BBQ-Alternative3\x64\Debug\Dream BBQ Alternative 2.exe при последней инкрементной компоновке; выполняется полная компоновка
+  Dream BBQ Alternative 2.vcxproj -> C:\Users\skoko\Source\Repos\Dream-BBQ-Alternative3\x64\Debug\Dream BBQ Alternative 2.exe
